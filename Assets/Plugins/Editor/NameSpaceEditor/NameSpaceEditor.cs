@@ -104,17 +104,14 @@ namespace Plugins.Editor.NameSpaceEditor
                 selectedIndex: _selectedOptionIndex,
                 displayedOptions: new[]
                 {
-                    new GUIContent("Generate new file"),
+                    new GUIContent("Output to Debug Log"),
                     new GUIContent("Overwrite an existing file"),
-                    new GUIContent("Output to Debug Log")
+                    new GUIContent("Generate new file")
                 }
             );
             switch (_selectedOptionIndex)
             {
-                case 0:
-                    GUILayout.Label("If no file name is specified, it will be assigned in numerical order.",
-                        EditorStyles.miniLabel);
-                    _fileName = GUILayout.TextField(_fileName);
+                case 0: 
                     break;
                 case 1:
                     var allFiles = FileManager.GetAllMarkdownFiles();
@@ -135,6 +132,9 @@ namespace Plugins.Editor.NameSpaceEditor
                     _fileName = allFiles[_selectedFileIndex];
                     break;
                 case 2:
+                GUILayout.Label("If no file name is specified, it will be assigned in numerical order.",
+                        EditorStyles.miniLabel);
+                    _fileName = GUILayout.TextField(_fileName);
                     break;
             }
 
@@ -157,7 +157,7 @@ namespace Plugins.Editor.NameSpaceEditor
                 MermaidMakerUtility.CreateStringText(NameSpaceToApply(_treeView.RootNode, new List<string>()),
                     _selectedOptionIndex, _fileName,_assembly);
                 CloseWindow();
-                if (_selectedOptionIndex == 0)
+                if (_selectedOptionIndex == 2)
                 {
                     Debug.Log(
                         "Output was successful! If the file is not found, please reload editor with ctrl+R (cmd+R).");

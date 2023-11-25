@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using Cysharp.Text;
 using static System.String;
 
 namespace Plugins.Runtime
@@ -86,12 +87,12 @@ namespace Plugins.Runtime
                 if (interfaces.Contains("System.Runtime")) continue;
                 if (type.Name.Contains("<>")) continue;
 
-                //TODO:Enum,PlayerDataFormatter
                 Debug.Log(type.Name);
 
                 if (type.IsEnum)
                 {
-                    fileText += $"{BR}    class {type.Name}{{<<enum>>{BR}   }}{BR}";
+                    fileText += $"{BR}    class {type.Name}{{{BR}    <<enum>>{BR}   }}{BR}";
+                    continue;
                 }
 
                 var words = type.BaseType?.Name.Split("`");
@@ -104,7 +105,7 @@ namespace Plugins.Runtime
 
                 fileText += $"{BR}    class {type.Name.Split("`")[0]}";
                 fileText += "{";
-                if (type.IsInterface) fileText += $"{BR}<<interface>>";
+                if (type.IsInterface) fileText += $"{BR}    <<interface>>";
                 fileText += $"{BR}";
 
                 var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
@@ -136,7 +137,10 @@ namespace Plugins.Runtime
 
                     var typeText = GetTypeText(method.ReturnType);
                     fileText += $"{typeText} ";
-                    fileText += $"{method.Name}(){BR}";
+
+                    var parameters = method.GetParameters().Select(parameter => $"{GetTypeText(parameter.ParameterType)} {parameter.Name}").ToArray();
+                    
+                    fileText += $"{method.Name}({ZString.Join(",",parameters)}){BR}";
                 }
 
                 fileText += @"   }";
@@ -150,15 +154,16 @@ namespace Plugins.Runtime
 
         private static string GetSpecialAttributeText(FieldInfo field)
         {
-            if (field.IsStatic) return "static ";
-            if (field.IsInitOnly) return "readonly ";
             if (field.IsLiteral) return "const ";
-            return "";
+            var text = "";
+            if (field.IsStatic) text += "static ";
+            if (field.IsInitOnly) text += "readonly ";
+            return text;
         }
 
         private static void CreateDiagramFile(string text, int selectedIndex, string fileName)
         {
-            if (selectedIndex == 2)
+            if (selectedIndex == 0)
             {
                 Debug.Log(text);
             }
@@ -173,7 +178,7 @@ namespace Plugins.Runtime
             if (fieldInfo.IsPrivate) return "-";
             if (fieldInfo.IsFamily) return "#";
             if (fieldInfo.IsPublic) return "+";
-            Debug.Log(fieldInfo.Name);
+            Debug.Log($"{fieldInfo.Name}の属性が見つかりません。");
             throw new Exception("Attribute not found");
         }
 
@@ -182,7 +187,7 @@ namespace Plugins.Runtime
             if (methodInfo.IsPrivate) return "-";
             if (methodInfo.IsFamily) return "#";
             if (methodInfo.IsPublic) return "+";
-            Debug.Log(methodInfo.Name);
+            Debug.Log($"{methodInfo.Name}の属性が見つかりません。");
             throw new Exception("Attribute not found");
         }
 
@@ -211,11 +216,6 @@ namespace Plugins.Runtime
                     "UInt16" => "ushort",
                     "UInt32" => "uint",
                     "UInt64" => "ulong",
-
-                    "Int32[]" => "int[]",
-                    "Single[]" => "float[]",
-                    "Boolean[]" => "bool[]",
-                    "Double[]" => "double[]",
                     _ => fieldType.Name
                 };
                 if (words2.Length == 2)
@@ -226,14 +226,32 @@ namespace Plugins.Runtime
                 return text;
             }
 
-            if (words.Length == 2)
-            {
-                var genericTypeList = fieldType.GenericTypeArguments.Select(GetTypeText).ToList();
+            if (words.Length >= 2)
+            {   
+                var arguments = fieldType.GenericTypeArguments;
 
-                var genericText = $"{words[0]}<{genericTypeList[0]}";
+                var genericTypeList = arguments.Select(GetTypeText).ToList();
+                string genericText = "";
+
+                if(words[0] == "ValueTuple")
+                {
+                    genericText += $"({genericTypeList[0]}";
+                }
+                else
+                {
+                    genericText += $"{words[0]}<{genericTypeList[0]}";
+                }
                 genericTypeList.RemoveAt(0);
                 genericTypeList.ForEach(text => { genericText += $",{text}"; });
-                genericText += ">";
+
+                if(words[0] == "ValueTuple")
+                {
+                    genericText += ")";
+                }
+                else
+                {
+                    genericText += ">";
+                }
                 return genericText;
             }
 
