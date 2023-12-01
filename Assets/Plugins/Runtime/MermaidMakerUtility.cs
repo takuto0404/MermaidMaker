@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using Cysharp.Text;
 using static System.String;
 
 namespace Plugins.Runtime
@@ -140,7 +139,7 @@ namespace Plugins.Runtime
                     var parameters = method.GetParameters()
                         .Select(parameter => $"{GetTypeText(parameter.ParameterType)} {parameter.Name}").ToArray();
 
-                    fileText += $"{method.Name}({ZString.Join(",", parameters)}){BR}";
+                    fileText += $"{method.Name}({Join(",", parameters)}){BR}";
                 }
 
                 fileText += @"   }";
