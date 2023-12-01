@@ -95,13 +95,13 @@ namespace Plugins.Runtime
                     continue;
                 }
 
-                var words = type.BaseType?.Name.Split("`");
-                if (words != null && type.BaseType != null)
-                    arrowText += $"{type.Name} --|> {words[0]}{BR}";
-
+                var typeWords = type.Name.Split("`");
+                var baseTypeWords = type.BaseType?.Name.Split("`");
+                if (baseTypeWords != null && type.BaseType != null)
+                    arrowText += $"{typeWords[0]} --|> {baseTypeWords[0]}{BR}";
 
                 arrowText = type.GetInterfaces().Where(interfaceType => memberInfos.Contains(interfaceType))
-                    .Aggregate(arrowText, (current, item) => current + $"{type.Name} ..|> {item.Name}{BR}");
+                    .Aggregate(arrowText, (current, item) => current + $"{typeWords[0]} ..|> {item.Name}{BR}");
 
                 fileText += $"{BR}    class {type.Name.Split("`")[0]}";
                 fileText += "{";
@@ -113,6 +113,7 @@ namespace Plugins.Runtime
 
                 foreach (var field in fields)
                 {
+                    Debug.Log(field.Name);
                     fileText += "       ";
                     var attributeText = GetFieldAttributeText(field);
                     if (attributeText == "") continue;
@@ -130,6 +131,7 @@ namespace Plugins.Runtime
                     .Where(method => method.DeclaringType == type);
                 foreach (var method in methods)
                 {
+                    Debug.Log(method.Name);
                     fileText += "       ";
                     var attributeText = GetMethodAttributeText(method);
                     if (attributeText == "") continue;
@@ -228,31 +230,46 @@ namespace Plugins.Runtime
 
             if (words.Length >= 2)
             {   
-                var arguments = fieldType.GenericTypeArguments;
+                var words2 = words[0].Split("[");
+                var word = words2[0];
 
-                var genericTypeList = arguments.Select(GetTypeText).ToList();
-                string genericText = "";
-
-                if(words[0] == "ValueTuple")
+                if (words2.Length == 2)
                 {
-                    genericText += $"({genericTypeList[0]}";
+                    var elementType = fieldType.GetElementType();
+                    var elementTypeText = GetTypeText(elementType);
                 }
                 else
                 {
-                    genericText += $"{words[0]}<{genericTypeList[0]}";
-                }
-                genericTypeList.RemoveAt(0);
-                genericTypeList.ForEach(text => { genericText += $",{text}"; });
+                    var arguments = fieldType.GenericTypeArguments;
+                    var genericTypeList = arguments.Select(GetTypeText).ToList();
+                    string genericText = "";
 
-                if(words[0] == "ValueTuple")
-                {
-                    genericText += ")";
+                    if(word == "ValueTuple")
+                    {
+                        genericText += $"({genericTypeList[0]}";
+                    }
+                    else
+                    {
+                        genericText += $"{word}<{genericTypeList[0]}";
+                    }
+                    genericTypeList.RemoveAt(0);
+                    genericTypeList.ForEach(text => { genericText += $",{text}"; });
+
+                    if(word == "ValueTuple")
+                    {
+                        genericText += ")";
+                    }
+                    else
+                    {
+                        genericText += ">";
+                    }
+                
+                    if (words2.Length == 2)
+                    {
+                        return $"{genericText}[{words2[1]}";
+                    }
+                    return genericText;
                 }
-                else
-                {
-                    genericText += ">";
-                }
-                return genericText;
             }
 
             return "";
