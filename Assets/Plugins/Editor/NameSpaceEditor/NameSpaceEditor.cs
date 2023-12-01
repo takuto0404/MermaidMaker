@@ -47,10 +47,7 @@ namespace Plugins.Editor.NameSpaceEditor
         private void OnEnable()
         {
             _beforeSelectedFileIndex = -1;
-            if (_treeViewState == null)
-            {
-                _treeViewState = new TreeViewState();
-            }
+            _treeViewState ??= new TreeViewState();
 
             var nameColumn = new MultiColumnHeaderState.Column
             {
@@ -157,15 +154,10 @@ namespace Plugins.Editor.NameSpaceEditor
                 MermaidMakerUtility.CreateStringText(NameSpaceToApply(_treeView.RootNode, new List<string>()),
                     _selectedOptionIndex, _fileName,_assembly);
                 CloseWindow();
-                if (_selectedOptionIndex == 2)
-                {
-                    Debug.Log(
-                        "Output was successful! If the file is not found, please reload editor with ctrl+R (cmd+R).");
-                }
-                else
-                {
-                    Debug.Log("Output was successful!");
-                }
+                Debug.Log(
+                    _selectedOptionIndex == 2
+                        ? "Output was successful! If the file is not found, please reload editor with ctrl+R (cmd+R)."
+                        : "Output was successful!");
             }
 
             if (!selectedNameSpaces)

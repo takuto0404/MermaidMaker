@@ -9,7 +9,7 @@ namespace Plugins.Editor.AssemblyEditor
     public class AssemblyEditor : EditorWindow
     {
         private bool _selectAssembly;
-        private AssemblyDefinitionAsset _asmdef;
+        private AssemblyDefinitionAsset _asmDef;
         private Assembly _assembly;
         private static AssemblyEditor _window;
 
@@ -33,7 +33,7 @@ namespace Plugins.Editor.AssemblyEditor
             if (_selectAssembly)
             {
                 GUILayout.Label("Assembly", EditorStyles.boldLabel);
-                _asmdef = (AssemblyDefinitionAsset)EditorGUILayout.ObjectField("Assembly", _asmdef,
+                _asmDef = (AssemblyDefinitionAsset)EditorGUILayout.ObjectField("Assembly", _asmDef,
                     typeof(AssemblyDefinitionAsset), false);
             }
             else
@@ -46,7 +46,7 @@ namespace Plugins.Editor.AssemblyEditor
                 var text = "Assembly-CSharp";
                 if (_selectAssembly)
                 {
-                    text = _asmdef.name;
+                    text = _asmDef.name;
                 }
 
                 _assembly = Assembly.Load(text);

@@ -83,11 +83,9 @@ namespace Plugins.Runtime
             foreach (var type in memberInfos)
             {
                 var interfaces = type.GetInterfaces().Select(item => item.Namespace)
-                    .Select(name => string.Join(".", name!.Split(".").Take(2))).ToList();
+                    .Select(name => Join(".", name!.Split(".").Take(2))).ToList();
                 if (interfaces.Contains("System.Runtime")) continue;
                 if (type.Name.Contains("<>")) continue;
-
-                Debug.Log(type.Name);
 
                 if (type.IsEnum)
                 {
@@ -108,12 +106,12 @@ namespace Plugins.Runtime
                 if (type.IsInterface) fileText += $"{BR}    <<interface>>";
                 fileText += $"{BR}";
 
-                var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+                var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance |
+                                            BindingFlags.Static)
                     .Where(field => field.DeclaringType == type);
 
                 foreach (var field in fields)
                 {
-                    Debug.Log(field.Name);
                     fileText += "       ";
                     var attributeText = GetFieldAttributeText(field);
                     if (attributeText == "") continue;
@@ -131,7 +129,6 @@ namespace Plugins.Runtime
                     .Where(method => method.DeclaringType == type);
                 foreach (var method in methods)
                 {
-                    Debug.Log(method.Name);
                     fileText += "       ";
                     var attributeText = GetMethodAttributeText(method);
                     if (attributeText == "") continue;
@@ -140,9 +137,10 @@ namespace Plugins.Runtime
                     var typeText = GetTypeText(method.ReturnType);
                     fileText += $"{typeText} ";
 
-                    var parameters = method.GetParameters().Select(parameter => $"{GetTypeText(parameter.ParameterType)} {parameter.Name}").ToArray();
-                    
-                    fileText += $"{method.Name}({ZString.Join(",",parameters)}){BR}";
+                    var parameters = method.GetParameters()
+                        .Select(parameter => $"{GetTypeText(parameter.ParameterType)} {parameter.Name}").ToArray();
+
+                    fileText += $"{method.Name}({ZString.Join(",", parameters)}){BR}";
                 }
 
                 fileText += @"   }";
@@ -195,84 +193,53 @@ namespace Plugins.Runtime
 
         private static string GetTypeText(Type fieldType)
         {
-            var words = fieldType.Name.Split("`");
-            if (words.Length == 1)
+            if (fieldType.HasElementType)
             {
-                var words2 = words[0].Split("[");
+                var elementType = fieldType.GetElementType();
+                var elementWords = fieldType.Name.Split("[");
+                return $"{GetTypeText(elementType)}[{elementWords[1]}";
+            }
 
-                var word = words2[0];
-                var text = word switch
+            if (fieldType.IsGenericType)
+            {
+                var genericTypes = fieldType.GenericTypeArguments;
+                var genericTypeTexts = genericTypes.Select(GetTypeText).ToArray();
+
+                var typeOriginalName = fieldType.Name.Split("`")[0];
+                var parenthesis = typeOriginalName == "ValueTuple"
+                    ? new [] { "(", ")" }
+                    : new [] { $"{typeOriginalName}<", ">" };
+
+                var text = $"{parenthesis[0]}{genericTypeTexts[0]}";
+                for (var i = 1; i < genericTypeTexts.Length; i++)
                 {
-                    "Boolean" => "bool",
-                    "Byte" => "byte",
-                    "Char" => "char",
-                    "Decimal" => "decimal",
-                    "Double" => "double",
-                    "Int16" => "short",
-                    "Int32" => "int",
-                    "Int64" => "long",
-                    "SByte" => "sbyte",
-                    "Single" => "float",
-                    "String" => "string",
-                    "Void" => "void",
-                    "UInt16" => "ushort",
-                    "UInt32" => "uint",
-                    "UInt64" => "ulong",
-                    _ => fieldType.Name
-                };
-                if (words2.Length == 2)
-                {
-                    return $"{text}[{words2[1]}";
+                    text += $",{genericTypeTexts[i]}";
                 }
 
+                text += $"{parenthesis[1]}";
                 return text;
             }
 
-            if (words.Length >= 2)
-            {   
-                var words2 = words[0].Split("[");
-                var word = words2[0];
-
-                if (words2.Length == 2)
-                {
-                    var elementType = fieldType.GetElementType();
-                    var elementTypeText = GetTypeText(elementType);
-                }
-                else
-                {
-                    var arguments = fieldType.GenericTypeArguments;
-                    var genericTypeList = arguments.Select(GetTypeText).ToList();
-                    string genericText = "";
-
-                    if(word == "ValueTuple")
-                    {
-                        genericText += $"({genericTypeList[0]}";
-                    }
-                    else
-                    {
-                        genericText += $"{word}<{genericTypeList[0]}";
-                    }
-                    genericTypeList.RemoveAt(0);
-                    genericTypeList.ForEach(text => { genericText += $",{text}"; });
-
-                    if(word == "ValueTuple")
-                    {
-                        genericText += ")";
-                    }
-                    else
-                    {
-                        genericText += ">";
-                    }
-                
-                    if (words2.Length == 2)
-                    {
-                        return $"{genericText}[{words2[1]}";
-                    }
-                    return genericText;
-                }
-            }
-
-            return "";
+            var fieldTypeName = fieldType.Name;
+            return fieldTypeName switch
+            {
+                "Boolean" => "bool",
+                "Byte" => "byte",
+                "Char" => "char",
+                "Decimal" => "decimal",
+                "Double" => "double",
+                "Int16" => "short",
+                "Int32" => "int",
+                "Int64" => "long",
+                "SByte" => "sbyte",
+                "Single" => "float",
+                "String" => "string",
+                "Void" => "void",
+                "UInt16" => "ushort",
+                "UInt32" => "uint",
+                "UInt64" => "ulong",
+                _ => fieldType.Name
+            };
         }
     }
 }
