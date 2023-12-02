@@ -111,6 +111,7 @@ namespace Plugins.Runtime
 
                 foreach (var field in fields)
                 {
+                    Debug.Log(field.Name);
                     fileText += "       ";
                     var attributeText = GetFieldAttributeText(field);
                     if (attributeText == "") continue;
