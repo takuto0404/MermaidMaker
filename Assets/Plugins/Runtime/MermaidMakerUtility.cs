@@ -122,8 +122,6 @@ namespace Plugins.Runtime
 
                 foreach (var field in fields)
                 {
-                    Debug.Log(field.Name);
-                    
                     if (IsSpecial(field.Name)) continue;
                     var typeText = GetTypeText(field.FieldType);
                     if (typeText == "") continue;
