@@ -90,6 +90,8 @@ namespace Plugins.Runtime
             var memberInfos = types.ToList();
             foreach (var type in memberInfos)
             {
+                Debug.Log(type.FullName);
+                
                 var interfaces = type.GetInterfaces().Select(item => item.Namespace)
                     .Select(name => Join(".", name!.Split(".").Take(2))).ToList();
                 if (interfaces.Contains("System.Runtime")) continue;
@@ -211,8 +213,6 @@ namespace Plugins.Runtime
             {
                 var elementType = fieldType.GetElementType();
                 var elementWords = fieldType.Name.Split("[");
-                Debug.Log(fieldType.Name);
-                Debug.Log(fieldType.FullName);
                 return $"{GetTypeText(elementType)}[{elementWords[1]}";
             }
 
