@@ -129,6 +129,7 @@ namespace Plugins.Runtime
 
                     fileText += GetSpecialAttributeText(field);
                     var typeText = GetTypeText(field.FieldType);
+                    if(typeText == "")continue;
                     fileText += $"{typeText} ";
 
                     fileText += $"{field.Name}{BR}";
@@ -146,10 +147,12 @@ namespace Plugins.Runtime
                     fileText += attributeText;
 
                     var typeText = GetTypeText(method.ReturnType);
+                    if(typeText == "")continue;
                     fileText += $"{typeText} ";
 
                     var parameters = method.GetParameters()
                         .Select(parameter => $"{GetTypeText(parameter.ParameterType)} {parameter.Name}").ToArray();
+                    if(parameters.Contains(""))continue;
 
                     fileText += $"{method.Name}({Join(",", parameters)}){BR}";
                 }
@@ -217,16 +220,22 @@ namespace Plugins.Runtime
         {
             if (fieldType.HasElementType)
             {
+                if (IsSpecial(fieldType.Name)) return "";
+                
                 var elementType = fieldType.GetElementType();
                 var elementWords = fieldType.Name.Split("[");
-                Debug.Log(fieldType.Name);
-                return $"{GetTypeText(elementType)}[{elementWords[1]}";
+                var typeText = GetTypeText(elementType);
+                if (typeText == "") return "";
+                return $"{typeText}[{elementWords[1]}";
             }
 
             if (fieldType.IsGenericType)
             {
+                if (IsSpecial(fieldType.Name)) return "";
+                
                 var genericTypes = fieldType.GenericTypeArguments;
                 var genericTypeTexts = genericTypes.Select(GetTypeText).ToArray();
+                if (genericTypeTexts.Contains("")) return "";
 
                 var typeOriginalName = fieldType.Name.Split("`")[0];
                 var parenthesis = typeOriginalName == "ValueTuple"
