@@ -4,18 +4,18 @@
 
 Unityプロジェクト内のクラス図を生成し、プロジェクトの設計を視覚化するためのツールです。以下の手順に従って、クラス図を生成することができます。。
 
-## セットアップ
+## インストール
 
-### インストール
+### Unity
 
 以下の手順に従ってインストールしてください。
 1. Windows > Package Managerを開く
 2. 左上の+ボタンから、Add package from git URLを選択
-3. `https://github.com/takuto0404/MermaidMaker_ohagi.git?path=Assets/Plugins`を入力してインストール
+3. `https://github.com/takuto0404/MermaidMaker_ohagi.git?path=src/Unity/Assets/Plugins/MermaidMaker`を入力してインストール
 
-また、Packages/manifest.jsonに`""com.ohagi.mermaidmaker":"https://github.com/takuto0404/MermaidMaker_ohagi.git?path=Assets/Plugins""`を追加することでもインストールできます。
+また、Packages/manifest.jsonに`""com.ohagi.mermaidmaker":"https://github.com/takuto0404/MermaidMaker_ohagi.git?path=src/Unity/Assets/Plugins/MermaidMaker""`を追加することでもインストールできます。
 
-### 使い方
+## 使い方
 
 正常にインストールが完了すると、Window > MermaidMakerが表示されます。
 
