@@ -211,6 +211,8 @@ namespace Plugins.Runtime
             {
                 var elementType = fieldType.GetElementType();
                 var elementWords = fieldType.Name.Split("[");
+                Debug.Log(fieldType.Name);
+                Debug.Log(fieldType.FullName);
                 return $"{GetTypeText(elementType)}[{elementWords[1]}";
             }
 
