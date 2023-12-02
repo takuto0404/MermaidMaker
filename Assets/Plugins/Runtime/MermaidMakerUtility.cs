@@ -19,8 +19,8 @@ namespace Plugins.Runtime
             'V', 'W', 'X', 'Y', 'Z',
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
             'v', 'w', 'x', 'y', 'z',
-            '^', '`', '[', ']',
-            '1','2','3','4','5','6','7','8','9','0'
+            '^', '`', '[', ']', '_',
+            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
         };
 
         public static NameSpaceNode GetNameSpaces(Assembly assembly)
@@ -95,7 +95,7 @@ namespace Plugins.Runtime
                     .Select(name => Join(".", name!.Split(".").Take(2))).ToList();
                 if (interfaces.Contains("System.Runtime")) continue;
 
-                if(IsSpecial(type.Name))continue;
+                if (IsSpecial(type.Name)) continue;
 
                 if (type.IsEnum)
                 {
@@ -122,10 +122,12 @@ namespace Plugins.Runtime
 
                 foreach (var field in fields)
                 {
-                    if(IsSpecial(field.Name))continue;
-                    var typeText = GetTypeText(field.FieldType);
-                    if(typeText == "")continue;
+                    Debug.Log(field.Name);
                     
+                    if (IsSpecial(field.Name)) continue;
+                    var typeText = GetTypeText(field.FieldType);
+                    if (typeText == "") continue;
+
                     fileText += "       ";
                     var attributeText = GetFieldAttributeText(field);
                     if (attributeText == "") continue;
@@ -138,22 +140,23 @@ namespace Plugins.Runtime
                 }
 
 
-                var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+                var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance |
+                                              BindingFlags.Static)
                     .Where(method => method.DeclaringType == type);
                 foreach (var method in methods)
                 {
-                    if(IsSpecial(method.Name))continue;
+                    if (IsSpecial(method.Name)) continue;
                     var parameters = method.GetParameters()
                         .Select(parameter => $"{GetTypeText(parameter.ParameterType)} {parameter.Name}").ToArray();
-                    if(parameters.Contains(""))continue;
-                    
+                    if (parameters.Contains("")) continue;
+
                     fileText += "       ";
                     var attributeText = GetMethodAttributeText(method);
                     if (attributeText == "") continue;
                     fileText += attributeText;
 
                     var typeText = GetTypeText(method.ReturnType);
-                    if(typeText == "")continue;
+                    if (typeText == "") continue;
                     fileText += $"{typeText} ";
 
                     fileText += $"{method.Name}({Join(",", parameters)}){BR}";
@@ -175,7 +178,7 @@ namespace Plugins.Runtime
             {
                 if (!NormalChars.Contains(c)) isContinue = true;
             }
-            
+
             return isContinue;
         }
 
@@ -217,13 +220,13 @@ namespace Plugins.Runtime
             Debug.Log($"{methodInfo.Name}の属性が見つかりません。");
             throw new Exception("Attribute not found");
         }
-        
+
         private static string GetTypeText(Type fieldType)
         {
             if (fieldType.HasElementType)
             {
                 if (IsSpecial(fieldType.Name)) return "";
-                
+
                 var elementType = fieldType.GetElementType();
                 var elementWords = fieldType.Name.Split("[");
                 var typeText = GetTypeText(elementType);
@@ -234,15 +237,15 @@ namespace Plugins.Runtime
             if (fieldType.IsGenericType)
             {
                 if (IsSpecial(fieldType.Name)) return "";
-                
+
                 var genericTypes = fieldType.GenericTypeArguments;
                 var genericTypeTexts = genericTypes.Select(GetTypeText).ToArray();
                 if (genericTypeTexts.Contains("")) return "";
 
                 var typeOriginalName = fieldType.Name.Split("`")[0];
                 var parenthesis = typeOriginalName == "ValueTuple"
-                    ? new [] { "(", ")" }
-                    : new [] { $"{typeOriginalName}<", ">" };
+                    ? new[] { "(", ")" }
+                    : new[] { $"{typeOriginalName}<", ">" };
 
                 var text = $"{parenthesis[0]}{genericTypeTexts[0]}";
                 for (var i = 1; i < genericTypeTexts.Length; i++)
