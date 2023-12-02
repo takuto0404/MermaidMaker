@@ -111,7 +111,7 @@ namespace Plugins.Runtime
 
                 foreach (var field in fields)
                 {
-                    Debug.Log(field.Name);
+                    Debug.Log($"{type.Name}の{field.Name}");
                     fileText += "       ";
                     var attributeText = GetFieldAttributeText(field);
                     if (attributeText == "") continue;
@@ -129,7 +129,7 @@ namespace Plugins.Runtime
                     .Where(method => method.DeclaringType == type);
                 foreach (var method in methods)
                 {
-                    Debug.Log(method.Name);
+                    Debug.Log($"{type.Name}の{method.Name}()");
                     fileText += "       ";
                     var attributeText = GetMethodAttributeText(method);
                     if (attributeText == "") continue;
