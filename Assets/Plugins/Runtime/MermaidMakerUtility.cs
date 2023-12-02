@@ -170,6 +170,7 @@ namespace Plugins.Runtime
             {
                 if (!NormalChars.Contains(c)) isContinue = true;
             }
+            if(!isContinue) Debug.Log(text);
             return isContinue;
         }
 
