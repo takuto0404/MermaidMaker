@@ -129,6 +129,7 @@ namespace Plugins.Runtime
                     .Where(method => method.DeclaringType == type);
                 foreach (var method in methods)
                 {
+                    Debug.Log(method.Name);
                     fileText += "       ";
                     var attributeText = GetMethodAttributeText(method);
                     if (attributeText == "") continue;

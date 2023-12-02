@@ -1,173 +1,80 @@
-using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using UnityEngine.UI;
 
-namespace Test2
+namespace Jamaica
 {
-    public static class JamaicaSolver
+    public class UGUILineRenderer : Graphic
     {
-        private static (int a, string b)[] ab;
-        private static Stack<(int,string)> ba;
-        /// <summary>
-        /// ソルブできるか、どのようにソルブできるかを試す
-        /// </summary>
-        /// <param name="dices">元々あるサイコロ</param>
-        /// <returns>ソルブ判定の結果を返すSolutionクラウs</returns>
-        private static readonly Stack<(int number, string text, int beforeOperatorMark)[]> DiceHist =
-            new Stack<(int number, string text, int beforeOperatorMark)[]>();
+        public Vector2[] positions = { };
+        [SerializeField] private float weight;
 
-        private static readonly Dictionary<int, string> OperatorDic = new Dictionary<int, string>()
+        public void SetPositions(Vector2[] newPositions)
         {
-            { 0, "+" },
-            { 1, "-" },
-            { 2, "*" },
-            { 3, "/" }
-        };
-
-        private static (int number, string text, int beforeOperatorMark)[] _dices;
-        private static List<string> _solutions;
-        private static int _answer;
-
-
-        public static (bool canSolve, List<string> solutions) SolveJamaica(int answer, int[] diceNumbers)
-        {
-            _solutions = new List<string>();
-            _dices = new (int number, string text, int beforeOperatorMark)[diceNumbers.Length];
-            for (int i = 0; i < diceNumbers.Length; i++)
-            {
-                _dices[i] = (diceNumbers[i], diceNumbers[i].ToString(), -1);
-            }
-
-            DiceHist.Push(_dices);
-            JamaicaSolver._answer = answer;
-            Solve();
-
-            return (_solutions.Count > 0, _solutions);
+            rectTransform.localPosition = Vector3.zero;
+            var processedPosition =
+                newPositions.Select(position => new Vector2(position.x - Screen.width / 2f, position.y - Screen.height / 2f)).ToArray();
+            positions = processedPosition;
+            SetVerticesDirty();
         }
 
-        private static void Solve()
+        protected override void OnPopulateMesh(VertexHelper vh)
         {
-            var last = DiceHist.Peek();
-            var subscribed1 = new List<int>();
-            for (int i = 0; i < _dices.Length; i++)
+            if (positions.Length >= 2)
             {
-                if (last[i].number == -1 || subscribed1.Contains(last[i].number)) continue;
-                subscribed1.Add(last[i].number);
-                var subscribed2 = new List<int>();
-                for (int j = 0; j < _dices.Length; j++)
+                // （１）過去の頂点を削除
+                vh.Clear();
+
+                for (var i = 0; i < positions.Length - 1; i++)
                 {
-                    if (i == j || last[j].number == -1 || last[i].number == -1 || subscribed2.Contains(last[i].number) ||
-                        last[i].number < last[j].number) continue;
-                    subscribed2.Add(last[i].number);
-                    for (int k = 0; k < 4; k++)
-                    {
-                        var newArray = CopyArray(last);
-                        var oneBefore = newArray[i];
-                        var anotherOneBefore = newArray[j];
+                    var position1 = positions[i];
+                    var position2 = positions[i + 1];
+                    // （２）垂直ベクトルの計算
+                    var pos1To2 = position2 - position1;
+                    var verticalVector = CalculateVerticalVector(pos1To2);
 
-                        var one = newArray[i];
-                        var anotherOne = newArray[j];
-                        var canCalculate = new bool[4]
-                        {
-                            true, one.number <= anotherOne.number, true,
-                            ((float)one.number / (float)anotherOne.number) % 1 == 0 && anotherOne.number != 0 &&
-                            anotherOne.number != 1
-                        };
+                    // （３）左下、左上のベクトルを計算
+                    var pos1Top = position1 + verticalVector * -weight / 2;
+                    var pos1Bottom = position1 + verticalVector * weight / 2;
+                    var pos2Top = position2 + verticalVector * -weight / 2;
+                    var pos2Bottom = position2 + verticalVector * weight / 2;
 
-                        if (!canCalculate[k]) continue;
-                        if ((oneBefore.beforeOperatorMark is 0 or 2 && oneBefore.beforeOperatorMark == k) || (anotherOneBefore.beforeOperatorMark is 0 or 2 &&
-                                anotherOneBefore.beforeOperatorMark == k))
-                        {
-                            if (oneBefore.number < anotherOne.number)
-                            {
-                                continue;
-                            }
-                        }
-                        if (oneBefore.beforeOperatorMark == 3 && anotherOneBefore.beforeOperatorMark == 2)
-                        {
-                            continue;
-                        }
-
-                        switch (k)
-                        {
-                            case 0:
-                                one.number += anotherOne.number;
-                                break;
-                            case 1:
-                                one.number -= anotherOne.number;
-                                break;
-                            case 2:
-                                one.number *= anotherOne.number;
-                                break;
-                            case 3:
-                                one.number /= anotherOne.number;
-                                break;
-                        }
-
-                        if (k is 2 or 3)
-                        {
-                            if (oneBefore.beforeOperatorMark is 0 or 1 && anotherOneBefore.beforeOperatorMark is 0 or 1)
-                            {
-                                one.text = $"({oneBefore.text}) {OperatorDic[k]} ({anotherOneBefore.text})";
-                            }
-                            else if (oneBefore.beforeOperatorMark is 0 or 1)
-                            {
-                                one.text = $"({oneBefore.text}) {OperatorDic[k]} {anotherOneBefore.text}";
-                            }
-                            else if (anotherOneBefore.beforeOperatorMark is 0 or 1)
-                            {
-                                one.text = $"{oneBefore.text} {OperatorDic[k]} ({anotherOneBefore.text})";
-                            }
-                            else
-                            {
-                                one.text = $"{oneBefore.text} {OperatorDic[k]} {anotherOneBefore.text}";
-                            }
-                        }
-                        else
-                        {
-                            one.text = $"{oneBefore.text} {OperatorDic[k]} {anotherOneBefore.text}";
-                        }
+                    // （４）頂点を頂点リストに追加
+                    AddVert(vh, pos1Top);
+                    AddVert(vh, pos1Bottom);
+                    AddVert(vh, pos2Top);
+                    AddVert(vh, pos2Bottom);
 
 
-                        one.beforeOperatorMark = k;
+                    var indexBuffer = i * 4;
 
-                        anotherOne.text = "";
-                        anotherOne.number = -1;
-                        anotherOne.beforeOperatorMark = -1;
-
-                        newArray[i] = one;
-                        newArray[j] = anotherOne;
-                        DiceHist.Push(newArray);
-
-                        var activeList = newArray.Where(x => x.number != -1).ToArray();
-                        if (activeList.Length == 1)
-                        {
-                            if (activeList.First().number == _answer)
-                            {
-                                var text = $"{activeList.First().text} = {_answer}";
-                                if (_solutions.Contains(text)) continue;
-                                _solutions.Add(text);
-                            }
-                        }
-
-                        Solve();
-
-                        DiceHist.Pop();
-                    }
+                    // （５）頂点リストを元にメッシュを貼る
+                    vh.AddTriangle(0 + indexBuffer, 1 + indexBuffer, 2 + indexBuffer);
+                    vh.AddTriangle(1 + indexBuffer, 2 + indexBuffer, 3 + indexBuffer);
                 }
             }
         }
 
-        static (int number, string text, int beforeOperatorMark)[] CopyArray(
-            (int number, string text, int beforeOpeartorMark)[] array)
+        private void AddVert(VertexHelper vh, Vector2 pos)
         {
-            (int number, string text, int beforeOperatorMark)[] newArray =
-                new (int number, string text, int beforeOperatorMark)[array.Length];
-            for (int i = 0; i < array.Length; i++)
+            var vert = UIVertex.simpleVert;
+            vert.position = pos;
+            vert.color = color;
+            vh.AddVert(vert);
+        }
+
+        private Vector2 CalculateVerticalVector(Vector2 vec)
+        {
+            // 0除算の防止
+            if (vec.y == 0)
             {
-                newArray[i] = array[i];
+                return Vector2.up;
             }
 
-            return newArray;
+            {
+                var verticalVector = new Vector2(1.0f, -vec.x / vec.y);
+                return verticalVector.normalized;
+            }
         }
     }
 }
