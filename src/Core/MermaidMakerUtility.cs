@@ -77,7 +77,7 @@ namespace Plugins.Core
         }
 
         public static string CreateStringText(List<string> nameSpaces, int selectedIndex, string fileName,
-            Assembly assembly,string path)
+            Assembly assembly, string path)
         {
             _nameSpaces = nameSpaces;
             var fileText = "";
@@ -170,7 +170,7 @@ namespace Plugins.Core
             fileText += arrowText;
 
             var markdown = $"```mermaid{BR}    classDiagram{BR}{fileText}```";
-            if (selectedIndex != 0) CreateDiagramFile(markdown, fileName,path);
+            if (selectedIndex != 0) CreateDiagramFile(markdown, fileName, path);
             return markdown;
         }
 
@@ -194,9 +194,9 @@ namespace Plugins.Core
             return text;
         }
 
-        private static void CreateDiagramFile(string text, string fileName,string path)
+        private static void CreateDiagramFile(string text, string fileName, string path)
         {
-            FileManager.WriteFile(fileName, text,path);
+            FileManager.WriteFile(fileName, text, path);
         }
 
         private static string GetFieldAttributeText(FieldInfo fieldInfo)
