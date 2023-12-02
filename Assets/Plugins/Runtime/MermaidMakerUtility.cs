@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEngine;
 using static System.String;
 
 namespace Plugins.Runtime
@@ -77,8 +76,8 @@ namespace Plugins.Runtime
             return root;
         }
 
-        public static void CreateStringText(List<string> nameSpaces, int selectedIndex, string fileName,
-            Assembly assembly)
+        public static string CreateStringText(List<string> nameSpaces, int selectedIndex, string fileName,
+            Assembly assembly,string path)
         {
             _nameSpaces = nameSpaces;
             var fileText = "";
@@ -170,7 +169,9 @@ namespace Plugins.Runtime
 
             fileText += arrowText;
 
-            CreateDiagramFile($"```mermaid{BR}    classDiagram{BR}{fileText}```", selectedIndex, fileName);
+            var markdown = $"```mermaid{BR}    classDiagram{BR}{fileText}```";
+            if (selectedIndex != 0) CreateDiagramFile(markdown, fileName,path);
+            return markdown;
         }
 
         private static bool IsSpecial(string text)
@@ -193,16 +194,9 @@ namespace Plugins.Runtime
             return text;
         }
 
-        private static void CreateDiagramFile(string text, int selectedIndex, string fileName)
+        private static void CreateDiagramFile(string text, string fileName,string path)
         {
-            if (selectedIndex == 0)
-            {
-                Debug.Log(text);
-            }
-            else
-            {
-                FileManager.WriteFile(fileName, text);
-            }
+            FileManager.WriteFile(fileName, text,path);
         }
 
         private static string GetFieldAttributeText(FieldInfo fieldInfo)
@@ -210,7 +204,6 @@ namespace Plugins.Runtime
             if (fieldInfo.IsPrivate) return "-";
             if (fieldInfo.IsFamily) return "#";
             if (fieldInfo.IsPublic) return "+";
-            Debug.Log($"{fieldInfo.Name}の属性が見つかりません。");
             throw new Exception("Attribute not found");
         }
 
@@ -219,7 +212,6 @@ namespace Plugins.Runtime
             if (methodInfo.IsPrivate) return "-";
             if (methodInfo.IsFamily) return "#";
             if (methodInfo.IsPublic) return "+";
-            Debug.Log($"{methodInfo.Name}の属性が見つかりません。");
             throw new Exception("Attribute not found");
         }
 
@@ -232,8 +224,7 @@ namespace Plugins.Runtime
                 var elementType = fieldType.GetElementType();
                 var elementWords = fieldType.Name.Split("[");
                 var typeText = GetTypeText(elementType);
-                if (typeText == "") return "";
-                return $"{typeText}[{elementWords[1]}";
+                return typeText == "" ? "" : $"{typeText}[{elementWords[1]}";
             }
 
             if (fieldType.IsGenericType)

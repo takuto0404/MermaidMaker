@@ -1,23 +1,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEngine;
 using File = System.IO.File;
 
 namespace Plugins.Runtime
 {
     public static class FileManager
     {
-        private static string MermaidMakerFolderPath => Path.Combine(Application.dataPath, "MermaidMaker");
-        
-
-        public static void WriteFile(string fileName,string text)
+        public static void WriteFile(string fileName,string text,string path)
         {
-            if (!Directory.Exists(MermaidMakerFolderPath))
+            if (!Directory.Exists(path))
             {
-                Directory.CreateDirectory(MermaidMakerFolderPath);
+                Directory.CreateDirectory(path);
             }
-            var filePath = Path.Combine(MermaidMakerFolderPath, $"{fileName}.md");
+            var filePath = Path.Combine(path, $"{fileName}.md");
 
             if (!File.Exists(filePath))
             {
@@ -27,23 +23,23 @@ namespace Plugins.Runtime
             File.WriteAllText(filePath,text);
         }
 
-        public static List<string> GetAllMarkdownFiles()
+        public static List<string> GetAllMarkdownFiles(string path)
         {
-            if (!Directory.Exists(MermaidMakerFolderPath))
+            if (!Directory.Exists(path))
             {
                 return new List<string>();
             }
-            var directoryInfo = new DirectoryInfo(MermaidMakerFolderPath);
+            var directoryInfo = new DirectoryInfo(path);
             var fileInfos = directoryInfo.GetFiles("*.md").ToList();
             fileInfos.RemoveAll(item => item.Name == ".md");
             return fileInfos.Select(file => file.Name.Split(".")[0]).ToList();
         }
 
-        public static int GetNumberOfDefaultFiles()
+        public static int GetNumberOfDefaultFiles(string path)
         {
             for (var i = 0;; i++)
             {
-                if (!File.Exists(Path.Combine(MermaidMakerFolderPath, $"ClassDiagram{i + 1}.md")))
+                if (!File.Exists(Path.Combine(path, $"ClassDiagram{i + 1}.md")))
                 {
                     return i + 1;
                 }

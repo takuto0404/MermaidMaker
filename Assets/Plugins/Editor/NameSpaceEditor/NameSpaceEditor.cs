@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Plugins.Runtime;
@@ -14,6 +15,7 @@ namespace Plugins.Editor.NameSpaceEditor
         private TreeViewState _treeViewState;
         private static NameSpaceNode _rootNode;
         private SearchField _searchField;
+        private static string MermaidMakerFolderPath => Path.Combine(Application.dataPath, "MermaidMaker");
 
         /// <summary>
         /// 0...新規ファイル生成
@@ -111,7 +113,7 @@ namespace Plugins.Editor.NameSpaceEditor
                 case 0: 
                     break;
                 case 1:
-                    var allFiles = FileManager.GetAllMarkdownFiles();
+                    var allFiles = FileManager.GetAllMarkdownFiles(MermaidMakerFolderPath);
                     if (allFiles.Count == 0)
                     {
                         GUILayout.Label(
@@ -148,11 +150,12 @@ namespace Plugins.Editor.NameSpaceEditor
             {
                 if (_selectedFileIndex == 0 && _fileName == "")
                 {
-                    _fileName = $"ClassDiagram{FileManager.GetNumberOfDefaultFiles()}";
+                    _fileName = $"ClassDiagram{FileManager.GetNumberOfDefaultFiles(MermaidMakerFolderPath)}";
                 }
 
-                MermaidMakerUtility.CreateStringText(NameSpaceToApply(_treeView.RootNode, new List<string>()),
-                    _selectedOptionIndex, _fileName,_assembly);
+                var result = MermaidMakerUtility.CreateStringText(NameSpaceToApply(_treeView.RootNode, new List<string>()),
+                    _selectedOptionIndex, _fileName,_assembly,MermaidMakerFolderPath);
+                if(_selectedOptionIndex == 0)Debug.Log(result);
                 CloseWindow();
                 Debug.Log(
                     _selectedOptionIndex == 2
