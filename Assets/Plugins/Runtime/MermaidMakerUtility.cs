@@ -81,15 +81,6 @@ namespace Plugins.Runtime
             var memberInfos = types.ToList();
             foreach (var type in memberInfos)
             {
-                if (type.Name == "PlayerDataFormatter")
-                {
-                    Debug.Log(type.Assembly);
-                    Debug.Log(type.Namespace);
-                    Debug.Log(type.BaseType);
-                    Debug.Log(type.FullName);
-                    Debug.Log(type.GenericTypeArguments.Length);
-                }
-                
                 var interfaces = type.GetInterfaces().Select(item => item.Namespace)
                     .Select(name => Join(".", name!.Split(".").Take(2))).ToList();
                 if (interfaces.Contains("System.Runtime")) continue;
@@ -205,6 +196,8 @@ namespace Plugins.Runtime
             {
                 var elementType = fieldType.GetElementType();
                 var elementWords = fieldType.Name.Split("[");
+                Debug.Log(elementType);
+                Debug.Log(elementWords.Length);
                 return $"{GetTypeText(elementType)}[{elementWords[1]}";
             }
 
