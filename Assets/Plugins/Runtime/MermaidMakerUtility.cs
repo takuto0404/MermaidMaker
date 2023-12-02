@@ -13,6 +13,15 @@ namespace Plugins.Runtime
 
         private static List<string> _nameSpaces;
 
+        private static readonly List<char> NormalChars = new()
+        {
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+            'V', 'W', 'X', 'Y', 'Z',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+            'v', 'w', 'x', 'y', 'z',
+            '^', '`'
+        };
+
         public static NameSpaceNode GetNameSpaces(Assembly assembly)
         {
             var id = 0;
@@ -84,7 +93,13 @@ namespace Plugins.Runtime
                 var interfaces = type.GetInterfaces().Select(item => item.Namespace)
                     .Select(name => Join(".", name!.Split(".").Take(2))).ToList();
                 if (interfaces.Contains("System.Runtime")) continue;
-                if (type.Name.Contains("<>")) continue;
+
+                var isContinue = false;
+                foreach (var c in type.Name)
+                {
+                    if (!NormalChars.Contains(c)) isContinue = true;
+                }
+                if(isContinue)continue;
 
                 if (type.IsEnum)
                 {
@@ -189,16 +204,13 @@ namespace Plugins.Runtime
             Debug.Log($"{methodInfo.Name}の属性が見つかりません。");
             throw new Exception("Attribute not found");
         }
-
+        
         private static string GetTypeText(Type fieldType)
         {
             if (fieldType.HasElementType)
             {
                 var elementType = fieldType.GetElementType();
                 var elementWords = fieldType.Name.Split("[");
-                Debug.Log(fieldType.Name);
-                Debug.Log(elementType);
-                Debug.Log(elementWords.Length);
                 return $"{GetTypeText(elementType)}[{elementWords[1]}";
             }
 
