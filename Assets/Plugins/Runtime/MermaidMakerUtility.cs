@@ -90,18 +90,11 @@ namespace Plugins.Runtime
             var memberInfos = types.ToList();
             foreach (var type in memberInfos)
             {
-                Debug.Log(type.FullName);
-                
                 var interfaces = type.GetInterfaces().Select(item => item.Namespace)
                     .Select(name => Join(".", name!.Split(".").Take(2))).ToList();
                 if (interfaces.Contains("System.Runtime")) continue;
 
-                var isContinue = false;
-                foreach (var c in type.Name)
-                {
-                    if (!NormalChars.Contains(c)) isContinue = true;
-                }
-                if(isContinue)continue;
+                if(IsSpecial(type.Name))continue;
 
                 if (type.IsEnum)
                 {
@@ -128,6 +121,7 @@ namespace Plugins.Runtime
 
                 foreach (var field in fields)
                 {
+                    if(IsSpecial(field.Name))continue;
                     fileText += "       ";
                     var attributeText = GetFieldAttributeText(field);
                     if (attributeText == "") continue;
@@ -145,6 +139,7 @@ namespace Plugins.Runtime
                     .Where(method => method.DeclaringType == type);
                 foreach (var method in methods)
                 {
+                    if(IsSpecial(method.Name))continue;
                     fileText += "       ";
                     var attributeText = GetMethodAttributeText(method);
                     if (attributeText == "") continue;
@@ -166,6 +161,16 @@ namespace Plugins.Runtime
             fileText += arrowText;
 
             CreateDiagramFile($"```mermaid{BR}    classDiagram{BR}{fileText}```", selectedIndex, fileName);
+        }
+
+        private static bool IsSpecial(string text)
+        {
+            var isContinue = false;
+            foreach (var c in text)
+            {
+                if (!NormalChars.Contains(c)) isContinue = true;
+            }
+            return isContinue;
         }
 
         private static string GetSpecialAttributeText(FieldInfo field)
