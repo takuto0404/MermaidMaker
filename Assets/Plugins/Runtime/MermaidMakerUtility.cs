@@ -145,7 +145,11 @@ namespace Plugins.Runtime
                 {
                     if (IsSpecial(method.Name)) continue;
                     var parameters = method.GetParameters()
-                        .Select(parameter => $"{GetTypeText(parameter.ParameterType)} {parameter.Name}").ToArray();
+                        .Select(parameter =>
+                        {
+                            var parameterTypeText = GetTypeText(parameter.ParameterType);
+                            return parameterTypeText == "" ? "" : $"{parameterTypeText} {parameter.Name}";
+                        }).ToArray();
                     if (parameters.Contains("")) continue;
 
                     fileText += "       ";
