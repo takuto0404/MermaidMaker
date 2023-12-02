@@ -81,6 +81,15 @@ namespace Plugins.Runtime
             var memberInfos = types.ToList();
             foreach (var type in memberInfos)
             {
+                if (type.Name == "PlayerDataFormatter")
+                {
+                    Debug.Log(type.Assembly);
+                    Debug.Log(type.Namespace);
+                    Debug.Log(type.BaseType);
+                    Debug.Log(type.FullName);
+                    Debug.Log(type.GenericTypeArguments.Length);
+                }
+                
                 var interfaces = type.GetInterfaces().Select(item => item.Namespace)
                     .Select(name => Join(".", name!.Split(".").Take(2))).ToList();
                 if (interfaces.Contains("System.Runtime")) continue;
@@ -111,7 +120,6 @@ namespace Plugins.Runtime
 
                 foreach (var field in fields)
                 {
-                    Debug.Log($"{type.Name}の{field.Name}");
                     fileText += "       ";
                     var attributeText = GetFieldAttributeText(field);
                     if (attributeText == "") continue;
@@ -129,7 +137,6 @@ namespace Plugins.Runtime
                     .Where(method => method.DeclaringType == type);
                 foreach (var method in methods)
                 {
-                    Debug.Log($"{type.Name}の{method.Name}()");
                     fileText += "       ";
                     var attributeText = GetMethodAttributeText(method);
                     if (attributeText == "") continue;
