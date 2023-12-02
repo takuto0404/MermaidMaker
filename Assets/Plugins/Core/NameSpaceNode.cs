@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Plugins.Runtime
+namespace Plugins.Core
 {
     public class NameSpaceNode
     {

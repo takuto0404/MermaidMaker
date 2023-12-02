@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Plugins.Editor
+namespace Plugins.Unity.Editor
 {
     public static class UnityLogger
     {

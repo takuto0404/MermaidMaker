@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Plugins.Runtime;
+using Plugins.Core;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
-namespace Plugins.Editor.NameSpaceEditor
+namespace Plugins.Unity.Editor.NameSpaceEditor
 {
     public class NameSpaceEditor : EditorWindow
     {

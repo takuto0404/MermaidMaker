@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Plugins.Runtime;
+using Plugins.Core;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
-namespace Plugins.Editor.NameSpaceEditor
+namespace Plugins.Unity.Editor.NameSpaceEditor
 {
     public class NameSpaceTreeView : TreeView
     {

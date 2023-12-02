@@ -1,10 +1,10 @@
 using System.Reflection;
-using Plugins.Runtime;
+using Plugins.Core;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
-namespace Plugins.Editor.AssemblyEditor
+namespace Plugins.Unity.Editor.AssemblyEditor
 {
     public class AssemblyEditor : EditorWindow
     {

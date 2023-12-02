@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using static System.String;
 
-namespace Plugins.Runtime
+namespace Plugins.Core
 {
     public static class MermaidMakerUtility
     {
