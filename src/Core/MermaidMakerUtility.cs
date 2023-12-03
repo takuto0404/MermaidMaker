@@ -104,10 +104,11 @@ namespace Plugins.Core
 
                 var typeWords = type.Name.Split("`");
                 var baseTypeWords = type.BaseType?.Name.Split("`");
-                if (baseTypeWords != null && type.BaseType != null)
+                if (baseTypeWords != null && type.BaseType != null && memberInfos.Contains(type.BaseType))
                     arrowText += $"{typeWords[0]} --|> {baseTypeWords[0]}{BR}";
 
-                arrowText = type.GetInterfaces().Where(interfaceType => memberInfos.Contains(interfaceType))
+                arrowText = type.GetInterfaces()
+                    .Where(interfaceType => memberInfos.Contains(interfaceType))
                     .Aggregate(arrowText, (current, item) => current + $"{typeWords[0]} ..|> {item.Name}{BR}");
 
                 fileText += $"{BR}    class {type.Name.Split("`")[0]}";
