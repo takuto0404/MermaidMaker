@@ -28,9 +28,9 @@ namespace Plugins.MermaidMaker.Runtime.Core
             var id = 0;
 
             var nameSpaces = assembly.GetTypes()
-                .Where(type =>
-                    !type.GetInterfaces().Select(item => item.Namespace)
-                        .Select(name => Join(".", name!.Split(".").Take(2))).ToList().Contains("System.Runtime"))
+                // .Where(type =>
+                    // !type.GetInterfaces().Select(item => item.Namespace)
+                    //     .Select(name => Join(".", name!.Split(".").Take(2))).ToList().Contains("System.Runtime"))
                 .Where(type => !IsSpecial(type.Name))
                 .Select(type => type.Namespace);
 
