@@ -1,15 +1,16 @@
-name: CopySymlink
+name: 'CopySymlink'
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
-  build:
-    runs-on: macos_lastest
+  copy-symlink:
+    name: copy symlink
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Copy symbolic links
+        name: Copy symbolic links
         run: |
           echo push!!
