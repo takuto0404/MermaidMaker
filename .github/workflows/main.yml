@@ -5,7 +5,7 @@ on:
     branches: ["main"]
 
 jobs:
-  copy_links:
+  build:
     runs_on: ubuntu_latest
     steps:
       - uses: actions/checkout@v3
