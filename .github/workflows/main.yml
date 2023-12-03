@@ -2,7 +2,7 @@ name: 'CopySymlink'
 
 on:
   push:
-    branches: [main]
+    branches: ["main"]
 
 jobs:
   copy-symlink:
