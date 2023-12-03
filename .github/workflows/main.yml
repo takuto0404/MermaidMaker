@@ -1,1 +1,17 @@
+name: CopySymlink
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  copy_links:
+    runs_on: ubuntu_latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Copy symbolic links
+        run: |
+          echo push!!
+
 
