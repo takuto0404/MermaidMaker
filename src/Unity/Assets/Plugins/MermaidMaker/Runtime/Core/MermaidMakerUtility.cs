@@ -148,11 +148,9 @@ namespace Plugins.MermaidMaker.Runtime.Core
                     fileText += $"{field.Name}{BR}";
 
                     var arrowResult = GetIntensiveRelationShip(type, field.FieldType, true);
-                    if (arrowResult != "")
-                    {
-                        Debug.Log(arrowResult);
-                        arrowText += $"{arrowResult}{BR}";
-                    }
+                    Debug.Log($"{field.Name}では{arrowResult}");
+                    if (arrowResult == "") continue;
+                    arrowText += $"{arrowResult}{BR}";
                 }
 
 
