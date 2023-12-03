@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Plugins.Core;
+using UnityEngine;
 using static System.String;
 
 namespace Plugins.MermaidMaker.Runtime.Core
@@ -112,11 +113,11 @@ namespace Plugins.MermaidMaker.Runtime.Core
                 }
 
                 var typeWords = type.Name.Split("`");
-                
+
                 var baseTypeWords = type.BaseType?.Name.Split("`");
                 if (baseTypeWords != null && type.BaseType != null && memberInfos.Contains(type.BaseType))
                     arrowText += $"{typeWords[0]} --|> {baseTypeWords[0]}{BR}";
-                
+
                 arrowText += type.GetInterfaces()
                     .Where(interfaceType => memberInfos.Contains(interfaceType))
                     .Aggregate(arrowText, (current, item) => current + $"{typeWords[0]} ..|> {item.Name}{BR}");
@@ -149,8 +150,9 @@ namespace Plugins.MermaidMaker.Runtime.Core
                     var arrowResult = GetIntensiveRelationShip(type, field.FieldType, true);
                     if (arrowResult != "")
                     {
+                        Debug.Log(arrowResult);
                         arrowText += $"{arrowResult}{BR}";
-                    };
+                    }
                 }
 
 
@@ -232,7 +234,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
             throw new Exception("Attribute not found");
         }
 
-        private static string GetIntensiveRelationShip(Type classType,Type fieldType,bool isFirst)
+        private static string GetIntensiveRelationShip(Type classType, Type fieldType, bool isFirst)
         {
             var baseInterfaces = fieldType.GetInterfaces();
             var baseType = fieldType.BaseType;
@@ -240,21 +242,17 @@ namespace Plugins.MermaidMaker.Runtime.Core
             {
                 return $"{fieldType.GetElementType()} --o {classType}";
             }
-            else
+
+            if (baseType == null) return "";
+
+            var result = GetIntensiveRelationShip(classType, baseType, false);
+            if (result == "")
             {
-                if (baseType == null) return "";
-                
-                var result = GetIntensiveRelationShip(classType, baseType,false);
-                if (result == "")
-                {
-                    return "";
-                }
-                else
-                {
-                    if (isFirst) return "";
-                    return $"{fieldType.GetElementType()!.Name.Split("`")[0]} --o {fieldType.Name.Split("`")[0]}";
-                }
+                return "";
             }
+
+            if (!isFirst) return "";
+            return $"{fieldType.GetElementType()!.Name.Split("`")[0]} --o {fieldType.Name.Split("`")[0]}";
         }
 
         private static string GetTypeText(Type fieldType)
