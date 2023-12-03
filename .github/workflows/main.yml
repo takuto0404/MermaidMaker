@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos_latest
+    runs-on: macos_lastest
     steps:
       - uses: actions/checkout@v3
 
