@@ -232,25 +232,22 @@ namespace Plugins.MermaidMaker.Runtime.Core
             throw new Exception("Attribute not found");
         }
 
-        private static string GetIntensiveRelationShip(Type classType, Type fieldType, bool isFirst)
+        private static string GetIntensiveRelationShip(Type classType, Type type, bool isFirst)
         {
-            var baseInterfaces = fieldType.GetInterfaces();
-            var baseType = fieldType.BaseType;
+            var baseInterfaces = type.GetInterfaces();
             if (baseInterfaces.Contains(typeof(System.Collections.IEnumerable)))
             {
-                return $"{fieldType.GetElementType()} --o {classType}";
+                return $"{type.GetElementType()!.Name.Split("`")[0]} --o {classType.Name.Split("`")[0]}";
             }
 
+            var baseType = type.BaseType;
             if (baseType == null) return "";
 
             var result = GetIntensiveRelationShip(classType, baseType, false);
-            if (result == "")
-            {
-                return "";
-            }
+            if (result == "") return "";
 
             if (!isFirst) return "";
-            return $"{fieldType.GetElementType()!.Name.Split("`")[0]} --o {fieldType.Name.Split("`")[0]}";
+            return $"{type.GetElementType()!.Name.Split("`")[0]} --o {classType.Name.Split("`")[0]}";
         }
 
         private static string GetTypeText(Type fieldType)
