@@ -28,6 +28,10 @@ namespace Plugins.MermaidMaker.Runtime.Core
             var id = 0;
 
             var nameSpaces = assembly.GetTypes()
+                .Where(type =>
+                    !type.GetInterfaces().Select(item => item.Namespace)
+                        .Select(name => Join(".", name!.Split(".").Take(2))).ToList().Contains("System.Runtime"))
+                .Where(type => !IsSpecial(type.Name))
                 .Select(type => type.Namespace);
 
             var nameSpaceDic = nameSpaces
@@ -86,7 +90,11 @@ namespace Plugins.MermaidMaker.Runtime.Core
 
             var types = assembly
                 .GetTypes()
-                .Where(type => _nameSpaces.Contains(type.Namespace));
+                .Where(type => _nameSpaces.Contains(type.Namespace))
+                .Where(type =>
+                    !type.GetInterfaces().Select(item => item.Namespace)
+                        .Select(name => Join(".", name!.Split(".").Take(2))).ToList().Contains("System.Runtime"))
+                .Where(type => !IsSpecial(type.Name));
 
             var memberInfos = types.ToList();
             foreach (var type in memberInfos)
