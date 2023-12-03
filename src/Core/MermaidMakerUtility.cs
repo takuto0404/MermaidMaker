@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Plugins.Core;
 using static System.String;
 
-namespace Plugins.Core
+namespace Plugins.MermaidMaker.Runtime.Core
 {
     public static class MermaidMakerUtility
     {
