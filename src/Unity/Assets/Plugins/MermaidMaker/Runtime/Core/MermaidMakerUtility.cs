@@ -24,6 +24,8 @@ namespace Plugins.MermaidMaker.Runtime.Core
             '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
         };
 
+        private static List<string> _typeNames;
+
         public static NameSpaceNode GetNameSpaces(Assembly assembly)
         {
             var id = 0;
@@ -87,7 +89,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
         {
             _nameSpaces = nameSpaces;
             var fileText = "";
-            var arrowText = "";
+            var arrowTexts = new List<string>();
 
             var types = assembly
                 .GetTypes()
@@ -96,8 +98,9 @@ namespace Plugins.MermaidMaker.Runtime.Core
                     !type.GetInterfaces().Select(item => item.Namespace)
                         .Select(name => Join(".", name!.Split(".").Take(2))).ToList().Contains("System.Runtime"))
                 .Where(type => !IsSpecial(type.Name));
-
-            var memberInfos = types.ToList();
+            var enumerable = types as Type[] ?? types.ToArray();
+            var memberInfos = enumerable.ToList();
+            _typeNames = enumerable.Select(type => SplitName(type.Name)).ToList();
             foreach (var type in memberInfos)
             {
                 var interfaces = type.GetInterfaces().Select(item => item.Namespace)
@@ -116,13 +119,17 @@ namespace Plugins.MermaidMaker.Runtime.Core
 
                 var baseTypeWords = type.BaseType?.Name.Split("`");
                 if (baseTypeWords != null && type.BaseType != null && memberInfos.Contains(type.BaseType))
-                    arrowText += $"{typeWords[0]} --|> {baseTypeWords[0]}{BR}";
+                    arrowTexts.Add($"{typeWords[0]} --|> {baseTypeWords[0]}{BR}");
 
-                arrowText += type.GetInterfaces()
-                    .Where(interfaceType => memberInfos.Contains(interfaceType))
-                    .Aggregate(arrowText, (current, item) => current + $"{typeWords[0]} ..|> {item.Name}{BR}");
+                foreach (var arrow in type.GetInterfaces()
+                             .Where(interfaceType => memberInfos.Contains(interfaceType))
+                             .Select(item => $"{typeWords[0]} ..|> {item.Name}{BR}"))
+                {
+                    arrowTexts.Add(arrow);
+                }
 
-                fileText += $"{BR}    class {type.Name.Split("`")[0]}";
+
+                fileText += $"{BR}    class {SplitName(type.Name)}";
                 fileText += "{";
                 if (type.IsInterface) fileText += $"{BR}    <<interface>>";
                 fileText += $"{BR}";
@@ -148,9 +155,8 @@ namespace Plugins.MermaidMaker.Runtime.Core
                     fileText += $"{field.Name}{BR}";
 
                     var arrowResult = GetIntensiveRelationShip(type, field.FieldType, true);
-                    Debug.Log($"{field.Name}では{arrowResult}");
-                    if (arrowResult == "") continue;
-                    arrowText += $"{arrowResult}{BR}";
+                    if (IsNullOrWhiteSpace(arrowResult)) continue;
+                    arrowTexts.Add($"{arrowResult}");
                 }
 
 
@@ -184,7 +190,9 @@ namespace Plugins.MermaidMaker.Runtime.Core
                 fileText += $"{BR}";
             }
 
-            fileText += arrowText;
+            arrowTexts = arrowTexts.Distinct().ToList();
+
+            fileText += Concat(arrowTexts);
 
             var markdown = $"```mermaid{BR}    classDiagram{BR}{fileText}```";
             if (selectedIndex != 0) CreateDiagramFile(markdown, fileName, path);
@@ -232,12 +240,48 @@ namespace Plugins.MermaidMaker.Runtime.Core
             throw new Exception("Attribute not found");
         }
 
+        private static string SplitName(string name)
+        {
+            return name.Split("`")[0];
+        }
+
+        private static IEnumerable<Type> GetGenerics(List<Type> types)
+        {
+            var list = new List<Type>();
+            //二次元配列
+            foreach (var type in types)
+            {
+                if (_typeNames.Contains(SplitName(type.Name)))
+                {
+                    list.Add(type);
+                }
+
+                var genericTypes = type.GetGenericArguments();
+                var result = GetGenerics(genericTypes.ToList());
+                list.AddRange(result);
+            }
+
+            return list;
+        }
+
         private static string GetIntensiveRelationShip(Type classType, Type type, bool isFirst)
         {
             var baseInterfaces = type.GetInterfaces();
             if (baseInterfaces.Contains(typeof(System.Collections.IEnumerable)))
             {
-                return $"{type.GetElementType()!.Name.Split("`")[0]} --o {classType.Name.Split("`")[0]}";
+                var text = "";
+                if (type.HasElementType)
+                {
+                    var elementType = type.GetElementType()!;
+                    if (!_typeNames.Contains(SplitName(elementType.Name))) return "";
+                    text = $"{SplitName(elementType.Name)} --o {SplitName(classType.Name)}{BR}";
+                }
+
+                var arguments = type.GetGenericArguments().ToList();
+                var generics = GetGenerics(arguments);
+                var text2 = Concat(generics.Select(genericType =>
+                    $"{SplitName(genericType.Name)} --o {SplitName(classType.Name)}{BR}"));
+                return Concat(text, text2);
             }
 
             var baseType = type.BaseType;
@@ -247,7 +291,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
             if (result == "") return "";
 
             if (!isFirst) return "";
-            return $"{type.GetElementType()!.Name.Split("`")[0]} --o {classType.Name.Split("`")[0]}";
+            return $"{SplitName(type.GetElementType()!.Name)} --o {SplitName(classType.Name)}";
         }
 
         private static string GetTypeText(Type fieldType)
@@ -270,7 +314,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
                 var genericTypeTexts = genericTypes.Select(GetTypeText).ToArray();
                 if (genericTypeTexts.Contains("")) return "";
 
-                var typeOriginalName = fieldType.Name.Split("`")[0];
+                var typeOriginalName = SplitName(fieldType.Name);
                 var parenthesis = typeOriginalName == "ValueTuple"
                     ? new[] { "(", ")" }
                     : new[] { $"{typeOriginalName}<", ">" };
