@@ -29,7 +29,7 @@ namespace Plugins.MermaidMaker.Editor
             }
 
             _targetAssembly = Assembly.Load(assemblyName);
-            var root = MermaidMakerUtility.GetNameSpaces(_targetAssembly);
+            var root = MermaidMakerUtility.MakeNameSpaceNodes(_targetAssembly);
 
             NameSpaceEditor.ShowWindow(root);
         }

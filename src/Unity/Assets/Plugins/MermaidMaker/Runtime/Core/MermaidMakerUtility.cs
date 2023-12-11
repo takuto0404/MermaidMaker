@@ -9,11 +9,11 @@ namespace Plugins.MermaidMaker.Runtime.Core
 {
     public static class MermaidMakerUtility
     {
-        private static readonly string BR = Environment.NewLine;
+        private static readonly string NewLine = Environment.NewLine;
 
         private static List<string> _nameSpaces;
 
-        private static readonly List<char> NormalChars = new()
+        private static readonly List<char> ValidCharacters = new()
         {
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
             'V', 'W', 'X', 'Y', 'Z',
@@ -25,33 +25,34 @@ namespace Plugins.MermaidMaker.Runtime.Core
 
         private static List<string> _typeNames;
 
-        public static NameSpaceNode GetNameSpaces(Assembly assembly)
+        public static NameSpaceNode MakeNameSpaceNodes(Assembly assembly)
         {
             var id = 0;
 
-            var nameSpaces = assembly.GetTypes()
+            var nameSpaceFullNames = assembly.GetTypes()
                 .Where(type =>
-                    !type.GetInterfaces().Select(item => item.Namespace)
-                        .Select(name => Join(".", name!.Split(".").Take(2))).ToList().Contains("System.Runtime"))
+                    !type.GetInterfaces()
+                        .Select(item => item.Namespace)
+                        .Select(nameSpaceFullName => Join(".", nameSpaceFullName!.Split(".").Take(2)))
+                        .ToList().Contains("System.Runtime"))
                 .Where(type => !IsSpecial(type.Name))
-                .Select(type => type.Namespace);
+                .Select(type => type.Namespace!);
 
-            var nameSpaceDic = nameSpaces
-                .Where(n => n != null)
+            var nameSpaceDictionary = nameSpaceFullNames
                 .ToDictionary(name => name.Split("."), name => name);
 
-            var nameSpaceNames = nameSpaceDic.Keys.ToList();
+            var nameSpaceNames = nameSpaceDictionary.Keys.ToList();
 
             var root = new NameSpaceNode(0, "Root", "");
-            var allNameSpaceNodes = new List<NameSpaceNode>();
-
+            
+            var nameSpaceNodes = new List<NameSpaceNode>();
             if (nameSpaceNames.Count != 0)
             {
                 foreach (var nameSpaceName in nameSpaceNames)
                 {
                     for (var i = 0; i < nameSpaceName.Length; i++)
                     {
-                        var allNameSpaceNames = allNameSpaceNodes.Select(node => node.NameSpaceName).ToList();
+                        var allNameSpaceNames = nameSpaceNodes.Select(node => node.NameSpaceName).ToList();
                         if (!allNameSpaceNames.Contains(nameSpaceName[i]))
                         {
                             NameSpaceNode parentNode;
@@ -63,19 +64,19 @@ namespace Plugins.MermaidMaker.Runtime.Core
                             {
                                 var parentName = nameSpaceName[i - 1];
                                 parentNode =
-                                    allNameSpaceNodes.First(node => node.NameSpaceName == parentName);
+                                    nameSpaceNodes.First(node => node.NameSpaceName == parentName);
                             }
 
-                            var newNode = new NameSpaceNode(id, nameSpaceName[i], nameSpaceDic[nameSpaceName]);
+                            var newNode = new NameSpaceNode(id, nameSpaceName[i], nameSpaceDictionary[nameSpaceName]);
                             parentNode.AddChild(newNode);
-                            allNameSpaceNodes.Add(newNode);
+                            nameSpaceNodes.Add(newNode);
                             id++;
                         }
                     }
                 }
             }
 
-            foreach (var node in allNameSpaceNodes)
+            foreach (var node in nameSpaceNodes)
             {
                 node.Children.Sort((a, b) => CompareOrdinal(a.NameSpaceName, b.NameSpaceName));
             }
@@ -99,7 +100,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
                 .Where(type => !IsSpecial(type.Name));
             var enumerable = types as Type[] ?? types.ToArray();
             var memberInfos = enumerable.ToList();
-            _typeNames = enumerable.Select(type => SplitName(type.Name)).ToList();
+            _typeNames = enumerable.Select(type => RemoveGenericPartFromTypeName(type.Name)).ToList();
             foreach (var type in memberInfos)
             {
                 var interfaces = type.GetInterfaces().Select(item => item.Namespace)
@@ -110,7 +111,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
 
                 if (type.IsEnum)
                 {
-                    fileText += $"{BR}    class {type.Name}{{{BR}    <<enum>>{BR}   }}{BR}";
+                    fileText += $"{NewLine}    class {type.Name}{{{NewLine}    <<enum>>{NewLine}   }}{NewLine}";
                     continue;
                 }
 
@@ -118,20 +119,20 @@ namespace Plugins.MermaidMaker.Runtime.Core
 
                 var baseTypeWords = type.BaseType?.Name.Split("`");
                 if (baseTypeWords != null && type.BaseType != null && memberInfos.Contains(type.BaseType))
-                    arrowTexts.Add($"{typeWords[0]} --|> {baseTypeWords[0]}{BR}");
+                    arrowTexts.Add($"{typeWords[0]} --|> {baseTypeWords[0]}{NewLine}");
 
                 foreach (var arrow in type.GetInterfaces()
                              .Where(interfaceType => memberInfos.Contains(interfaceType))
-                             .Select(item => $"{typeWords[0]} ..|> {item.Name}{BR}"))
+                             .Select(item => $"{typeWords[0]} ..|> {item.Name}{NewLine}"))
                 {
                     arrowTexts.Add(arrow);
                 }
 
 
-                fileText += $"{BR}    class {SplitName(type.Name)}";
+                fileText += $"{NewLine}    class {RemoveGenericPartFromTypeName(type.Name)}";
                 fileText += "{";
-                if (type.IsInterface) fileText += $"{BR}    <<interface>>";
-                fileText += $"{BR}";
+                if (type.IsInterface) fileText += $"{NewLine}    <<interface>>";
+                fileText += $"{NewLine}";
 
                 var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance |
                                             BindingFlags.Static)
@@ -151,7 +152,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
                     fileText += GetSpecialAttributeText(field);
                     fileText += $"{typeText} ";
 
-                    fileText += $"{field.Name}{BR}";
+                    fileText += $"{field.Name}{NewLine}";
 
                     var arrowResult = GetIntensiveRelationShip(type, field.FieldType, true);
                     if (IsNullOrWhiteSpace(arrowResult)) continue;
@@ -182,18 +183,18 @@ namespace Plugins.MermaidMaker.Runtime.Core
                     if (typeText == "") continue;
                     fileText += $"{typeText} ";
 
-                    fileText += $"{method.Name}({Join(",", parameters)}){BR}";
+                    fileText += $"{method.Name}({Join(",", parameters)}){NewLine}";
                 }
 
                 fileText += @"   }";
-                fileText += $"{BR}";
+                fileText += $"{NewLine}";
             }
 
             arrowTexts = arrowTexts.Distinct().ToList();
 
             fileText += Concat(arrowTexts);
 
-            var markdown = $"```mermaid{BR}    classDiagram{BR}{fileText}```";
+            var markdown = $"```mermaid{NewLine}    classDiagram{NewLine}{fileText}```";
             if (selectedIndex != 0) CreateDiagramFile(markdown, fileName, path);
             return markdown;
         }
@@ -203,7 +204,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
             var isContinue = false;
             foreach (var c in text)
             {
-                if (!NormalChars.Contains(c)) isContinue = true;
+                if (!ValidCharacters.Contains(c)) isContinue = true;
             }
 
             return isContinue;
@@ -239,7 +240,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
             throw new Exception("Attribute not found");
         }
 
-        private static string SplitName(string name)
+        private static string RemoveGenericPartFromTypeName(string name)
         {
             return name.Split("`")[0];
         }
@@ -250,7 +251,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
             //二次元配列
             foreach (var type in types)
             {
-                if (_typeNames.Contains(SplitName(type.Name)))
+                if (_typeNames.Contains(RemoveGenericPartFromTypeName(type.Name)))
                 {
                     list.Add(type);
                 }
@@ -272,14 +273,14 @@ namespace Plugins.MermaidMaker.Runtime.Core
                 if (type.HasElementType)
                 {
                     var elementType = type.GetElementType()!;
-                    if (!_typeNames.Contains(SplitName(elementType.Name))) return "";
-                    text = $"{SplitName(elementType.Name)} --o {SplitName(classType.Name)}{BR}";
+                    if (!_typeNames.Contains(RemoveGenericPartFromTypeName(elementType.Name))) return "";
+                    text = $"{RemoveGenericPartFromTypeName(elementType.Name)} --o {RemoveGenericPartFromTypeName(classType.Name)}{NewLine}";
                 }
 
                 var arguments = type.GetGenericArguments().ToList();
                 var generics = GetGenerics(arguments);
                 var text2 = Concat(generics.Select(genericType =>
-                    $"{SplitName(genericType.Name)} --o {SplitName(classType.Name)}{BR}"));
+                    $"{RemoveGenericPartFromTypeName(genericType.Name)} --o {RemoveGenericPartFromTypeName(classType.Name)}{NewLine}"));
                 return Concat(text, text2);
             }
 
@@ -290,7 +291,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
             if (result == "") return "";
 
             if (!isFirst) return "";
-            return $"{SplitName(type.GetElementType()!.Name)} --o {SplitName(classType.Name)}";
+            return $"{RemoveGenericPartFromTypeName(type.GetElementType()!.Name)} --o {RemoveGenericPartFromTypeName(classType.Name)}";
         }
 
         private static string GetTypeText(Type fieldType)
@@ -313,7 +314,7 @@ namespace Plugins.MermaidMaker.Runtime.Core
                 var genericTypeTexts = genericTypes.Select(GetTypeText).ToArray();
                 if (genericTypeTexts.Contains("")) return "";
 
-                var typeOriginalName = SplitName(fieldType.Name);
+                var typeOriginalName = RemoveGenericPartFromTypeName(fieldType.Name);
                 var parenthesis = typeOriginalName == "ValueTuple"
                     ? new[] { "(", ")" }
                     : new[] { $"{typeOriginalName}<", ">" };

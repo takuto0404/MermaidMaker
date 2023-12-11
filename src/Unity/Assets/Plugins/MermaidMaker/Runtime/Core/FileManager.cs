@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using File = System.IO.File;
 
-namespace Plugins.Core
+namespace Plugins.MermaidMaker.Runtime.Core
 {
     public static class FileManager
     {
