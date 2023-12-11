@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Plugins.MermaidMaker.Editor
+namespace Plugins.MermaidMaker.Runtime
 {
     public static class UnityLogger
     {

@@ -345,10 +345,11 @@
 -r:"Library/Bee/artifacts/200b0aEDbg.dag/UnityEditor.UI.ref.dll"
 -r:"Library/Bee/artifacts/200b0aEDbg.dag/UnityEngine.TestRunner.ref.dll"
 -r:"Library/Bee/artifacts/200b0aEDbg.dag/UnityEngine.UI.ref.dll"
-"Assets/Plugins/MermaidMaker/Editor/AssemblyEditor/AssemblyEditor.cs"
-"Assets/Plugins/MermaidMaker/Editor/NameSpaceEditor/NameSpaceEditor.cs"
-"Assets/Plugins/MermaidMaker/Editor/NameSpaceEditor/NameSpaceTreeView.cs"
-"Assets/Plugins/MermaidMaker/Editor/UnityLogger.cs"
+"Assets/Plugins/MermaidMaker/Editor/AssemblyEditor.cs"
+"Assets/Plugins/MermaidMaker/Editor/NameSpaceEditor.cs"
+"Assets/Plugins/MermaidMaker/Editor/NameSpaceTreeView.cs"
+"Assets/Plugins/MermaidMaker/Editor/OutputStyle.cs"
+"Assets/Plugins/MermaidMaker/Editor/ProcedureManager.cs"
 -langversion:9.0
 
 /deterministic

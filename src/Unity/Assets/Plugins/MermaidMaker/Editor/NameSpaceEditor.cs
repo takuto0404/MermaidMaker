@@ -8,27 +8,17 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
-namespace Plugins.MermaidMaker.Editor.NameSpaceEditor
+namespace Plugins.MermaidMaker.Editor
 {
     public class NameSpaceEditor : EditorWindow
     {
         private NameSpaceTreeView _treeView;
         private TreeViewState _treeViewState;
         private static NameSpaceNode _rootNode;
-        private SearchField _searchField;
-        private static string MermaidMakerFolderPath => Path.Combine(Application.dataPath, "MermaidMaker");
-
-        /// <summary>
-        /// 0...新規ファイル生成
-        /// 1...既にあるファイルを上書き
-        /// 2...Debug.Logに出力
-        /// </summary>
-        private int _selectedOptionIndex;
-
+        private static string FolderPath => Path.Combine(Application.dataPath, "MermaidMaker");
+        private OutputStyle _selectedStyle;
         private int _selectedFileIndex;
-
         private string _fileName;
-
         private int _beforeSelectedFileIndex;
         private static NameSpaceEditor _window;
         private static Assembly _assembly;
@@ -76,9 +66,6 @@ namespace Plugins.MermaidMaker.Editor.NameSpaceEditor
             var multiColumnHeader = new MultiColumnHeader(headerState);
             _treeView = new NameSpaceTreeView(_treeViewState, multiColumnHeader);
             _treeView.Setup(_rootNode);
-
-            _searchField = new SearchField();
-            _searchField.downOrUpArrowKeyPressed += _treeView.SetFocusAndEnsureSelectedItem;
         }
 
         private void OnGUI()
@@ -93,28 +80,28 @@ namespace Plugins.MermaidMaker.Editor.NameSpaceEditor
             {
                 GUILayout.Space(100);
                 GUILayout.FlexibleSpace();
-                _treeView.searchString = _searchField.OnToolbarGUI(_treeView.searchString);
             }
 
             var rect = EditorGUILayout.GetControlRect(false, 200);
             _treeView.OnGUI(rect);
 
-            _selectedOptionIndex = EditorGUILayout.Popup(
+            _selectedStyle = (OutputStyle)EditorGUILayout.Popup(
                 label: new GUIContent("Output Type"),
-                selectedIndex: _selectedOptionIndex,
+                selectedIndex: (int)_selectedStyle,
                 displayedOptions: new[]
                 {
-                    new GUIContent("Output to Debug Log"),
+                    new GUIContent("Debug Log"),
                     new GUIContent("Overwrite an existing file"),
                     new GUIContent("Generate new file")
                 }
             );
-            switch (_selectedOptionIndex)
+            
+            switch (_selectedStyle)
             {
-                case 0: 
+                case OutputStyle.DebugLog: 
                     break;
-                case 1:
-                    var allFiles = FileManager.GetAllMarkdownFiles(MermaidMakerFolderPath);
+                case OutputStyle.Overwrite:
+                    var allFiles = FileManager.GetAllMarkdownFiles(FolderPath);
                     if (allFiles.Count == 0)
                     {
                         GUILayout.Label(
@@ -131,7 +118,7 @@ namespace Plugins.MermaidMaker.Editor.NameSpaceEditor
                     );
                     _fileName = allFiles[_selectedFileIndex];
                     break;
-                case 2:
+                case OutputStyle.GenerateNewFile:
                 GUILayout.Label("If no file name is specified, it will be assigned in numerical order.",
                         EditorStyles.miniLabel);
                     _fileName = GUILayout.TextField(_fileName);
@@ -151,15 +138,15 @@ namespace Plugins.MermaidMaker.Editor.NameSpaceEditor
             {
                 if (_selectedFileIndex == 0 && _fileName == "")
                 {
-                    _fileName = $"ClassDiagram{FileManager.GetNumberOfDefaultFiles(MermaidMakerFolderPath)}";
+                    _fileName = $"ClassDiagram{FileManager.GetNumberOfDefaultFiles(FolderPath)}";
                 }
 
                 var result = MermaidMakerUtility.CreateStringText(NameSpaceToApply(_treeView.RootNode, new List<string>()),
-                    _selectedOptionIndex, _fileName,_assembly,MermaidMakerFolderPath);
-                if(_selectedOptionIndex == 0)Debug.Log(result);
+                    (int)_selectedStyle, _fileName,_assembly,FolderPath);
+                if(_selectedStyle == 0)Debug.Log(result);
                 CloseWindow();
                 Debug.Log(
-                    _selectedOptionIndex == 2
+                    _selectedStyle == OutputStyle.DebugLog
                         ? "Output was successful! If the file is not found, please reload editor with ctrl+R (cmd+R)."
                         : "Output was successful!");
             }

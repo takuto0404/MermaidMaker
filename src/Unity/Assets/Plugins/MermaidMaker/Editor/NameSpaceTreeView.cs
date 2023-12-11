@@ -3,7 +3,7 @@ using Plugins.Core;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
-namespace Plugins.MermaidMaker.Editor.NameSpaceEditor
+namespace Plugins.MermaidMaker.Editor
 {
     public class NameSpaceTreeView : TreeView
     {

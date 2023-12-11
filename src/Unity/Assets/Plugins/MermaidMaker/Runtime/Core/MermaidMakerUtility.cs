@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Plugins.Core;
-using UnityEngine;
 using static System.String;
 
 namespace Plugins.MermaidMaker.Runtime.Core
