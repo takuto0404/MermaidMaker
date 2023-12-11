@@ -1,9 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Plugins.Core;
-using Plugins.MermaidMaker.Runtime.Core;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -12,23 +11,22 @@ namespace Plugins.MermaidMaker.Editor
 {
     public class NameSpaceEditor : EditorWindow
     {
-        private NameSpaceTreeView _treeView;
+        private int _beforeSelectedFileIndex;
         private TreeViewState _treeViewState;
         private static NameSpaceNode _rootNode;
-        private static string FolderPath => Path.Combine(Application.dataPath, "MermaidMaker");
-        private OutputStyle _selectedStyle;
         private int _selectedFileIndex;
-        private string _fileName;
-        private int _beforeSelectedFileIndex;
         private static NameSpaceEditor _window;
-        private static Assembly _assembly;
+        public static string FileName { get; private set; }
+        public static string FolderPath => Path.Combine(Application.dataPath, "MermaidMaker");
+        public static event EventHandler ProcessCompleted;
+        public static OutputStyle SelectedStyle { get; private set; }
+        public static NameSpaceTreeView TreeView { get; private set; }
 
-        public static void ShowWindow(NameSpaceNode rootNode,Assembly assembly)
+        public static void ShowWindow(NameSpaceNode rootNode)
         {
             _rootNode = rootNode;
             _window = GetWindow<NameSpaceEditor>();
             _window.titleContent = new GUIContent("MermaidMaker - NameSpace Selection");
-            _assembly = assembly;
         }
 
         public static void CloseWindow()
@@ -64,15 +62,15 @@ namespace Plugins.MermaidMaker.Editor
             };
             var headerState = new MultiColumnHeaderState(new[] { nameColumn, selectBoxColumn });
             var multiColumnHeader = new MultiColumnHeader(headerState);
-            _treeView = new NameSpaceTreeView(_treeViewState, multiColumnHeader);
-            _treeView.Setup(_rootNode);
+            TreeView = new NameSpaceTreeView(_treeViewState, multiColumnHeader);
+            TreeView.Setup(_rootNode);
         }
 
         private void OnGUI()
         {
             if (_selectedFileIndex != _beforeSelectedFileIndex)
             {
-                _fileName = "";
+                FileName = "";
                 _beforeSelectedFileIndex = _selectedFileIndex;
             }
 
@@ -83,11 +81,11 @@ namespace Plugins.MermaidMaker.Editor
             }
 
             var rect = EditorGUILayout.GetControlRect(false, 200);
-            _treeView.OnGUI(rect);
+            TreeView.OnGUI(rect);
 
-            _selectedStyle = (OutputStyle)EditorGUILayout.Popup(
+            SelectedStyle = (OutputStyle)EditorGUILayout.Popup(
                 label: new GUIContent("Output Type"),
-                selectedIndex: (int)_selectedStyle,
+                selectedIndex: (int)SelectedStyle,
                 displayedOptions: new[]
                 {
                     new GUIContent("Debug Log"),
@@ -96,7 +94,7 @@ namespace Plugins.MermaidMaker.Editor
                 }
             );
             
-            switch (_selectedStyle)
+            switch (SelectedStyle)
             {
                 case OutputStyle.DebugLog: 
                     break;
@@ -116,17 +114,19 @@ namespace Plugins.MermaidMaker.Editor
                         selectedIndex: _selectedFileIndex,
                         displayedOptions: contents
                     );
-                    _fileName = allFiles[_selectedFileIndex];
+                    FileName = allFiles[_selectedFileIndex];
                     break;
                 case OutputStyle.GenerateNewFile:
                 GUILayout.Label("If no file name is specified, it will be assigned in numerical order.",
                         EditorStyles.miniLabel);
-                    _fileName = GUILayout.TextField(_fileName);
+                    FileName = GUILayout.TextField(FileName);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
-            var selectedNameSpaces = NameSpaceToApply(_rootNode, new List<string>()).Count != 0;
-            if (!selectedNameSpaces)
+            var isNoNameSpaceSelected = NameSpaceToApply(_rootNode, new List<string>()).Count == 0;
+            if (isNoNameSpaceSelected)
             {
                 EditorGUI.BeginDisabledGroup(true);
                 GUILayout.Label(
@@ -136,28 +136,22 @@ namespace Plugins.MermaidMaker.Editor
             
             if (GUILayout.Button("Apply", GUILayout.Width(100), GUILayout.Height(20)))
             {
-                if (_selectedFileIndex == 0 && _fileName == "")
+                if (_selectedFileIndex == 0 && FileName == "")
                 {
-                    _fileName = $"ClassDiagram{FileManager.GetNumberOfDefaultFiles(FolderPath)}";
+                    FileName = $"ClassDiagram{FileManager.GetNumberOfDefaultFiles(FolderPath)}";
                 }
-
-                var result = MermaidMakerUtility.CreateStringText(NameSpaceToApply(_treeView.RootNode, new List<string>()),
-                    (int)_selectedStyle, _fileName,_assembly,FolderPath);
-                if(_selectedStyle == 0)Debug.Log(result);
+                
                 CloseWindow();
-                Debug.Log(
-                    _selectedStyle == OutputStyle.DebugLog
-                        ? "Output was successful! If the file is not found, please reload editor with ctrl+R (cmd+R)."
-                        : "Output was successful!");
+                OnProcessCompleted();
             }
 
-            if (!selectedNameSpaces)
+            if (isNoNameSpaceSelected)
             {
                 EditorGUI.EndDisabledGroup();
             }
         }
 
-        private List<string> NameSpaceToApply(NameSpaceNode parentNode, List<string> result)
+        public static List<string> NameSpaceToApply(NameSpaceNode parentNode, List<string> result)
         {
             if (parentNode.Children.Count == 0) return result;
             foreach (var child in parentNode.Children)
@@ -167,6 +161,11 @@ namespace Plugins.MermaidMaker.Editor
             }
 
             return result;
+        }
+
+        private static void OnProcessCompleted()
+        {
+            ProcessCompleted?.Invoke(null, EventArgs.Empty);
         }
     }
 }

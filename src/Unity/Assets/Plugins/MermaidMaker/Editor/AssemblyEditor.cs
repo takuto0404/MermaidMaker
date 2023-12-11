@@ -7,11 +7,11 @@ namespace Plugins.MermaidMaker.Editor
 {
     public sealed class AssemblyEditor : EditorWindow
     {
-        public static bool AssemblySpecified;
-        public static AssemblyDefinitionAsset SelectedAssemblyDefinitionAsset;
         private static AssemblyEditor _window;
+        public static bool AssemblySpecified;
         public static event EventHandler ProcessCompleted;
-        
+        public static AssemblyDefinitionAsset SelectedAssemblyDefinitionAsset;
+
         public static void ShowWindow()
         {
             _window = GetWindow<AssemblyEditor>();
