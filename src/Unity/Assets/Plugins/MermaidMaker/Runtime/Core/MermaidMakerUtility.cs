@@ -25,54 +25,58 @@ namespace Plugins.MermaidMaker.Runtime.Core
 
         private static List<string> _typeNames;
 
-        public static NameSpaceNode MakeNameSpaceNodes(Assembly assembly)
+        private static List<Type> GetValidTypes(Assembly assembly)
         {
-            var id = 0;
-
-            var nameSpaceFullNames = assembly.GetTypes()
+            return assembly.GetTypes()
                 .Where(type =>
                     !type.GetInterfaces()
                         .Select(item => item.Namespace)
                         .Select(nameSpaceFullName => Join(".", nameSpaceFullName!.Split(".").Take(2)))
                         .ToList().Contains("System.Runtime"))
                 .Where(type => !IsSpecial(type.Name))
+                .ToList();
+        }
+
+        public static NameSpaceNode MakeNameSpaceNodes(Assembly assembly)
+        {
+            var id = 0;
+
+            var nameSpaceFullNames = GetValidTypes(assembly)
                 .Select(type => type.Namespace!);
 
             var nameSpaceDictionary = nameSpaceFullNames
                 .ToDictionary(name => name.Split("."), name => name);
 
-            var nameSpaceNames = nameSpaceDictionary.Keys.ToList();
+            var splitNames = nameSpaceDictionary.Keys.ToList();
 
             var root = new NameSpaceNode(0, "Root", "");
-            
-            var nameSpaceNodes = new List<NameSpaceNode>();
-            if (nameSpaceNames.Count != 0)
-            {
-                foreach (var nameSpaceName in nameSpaceNames)
-                {
-                    for (var i = 0; i < nameSpaceName.Length; i++)
-                    {
-                        var allNameSpaceNames = nameSpaceNodes.Select(node => node.NameSpaceName).ToList();
-                        if (!allNameSpaceNames.Contains(nameSpaceName[i]))
-                        {
-                            NameSpaceNode parentNode;
-                            if (i == 0)
-                            {
-                                parentNode = root;
-                            }
-                            else
-                            {
-                                var parentName = nameSpaceName[i - 1];
-                                parentNode =
-                                    nameSpaceNodes.First(node => node.NameSpaceName == parentName);
-                            }
 
-                            var newNode = new NameSpaceNode(id, nameSpaceName[i], nameSpaceDictionary[nameSpaceName]);
-                            parentNode.AddChild(newNode);
-                            nameSpaceNodes.Add(newNode);
-                            id++;
-                        }
+            var nameSpaceNodes = new List<NameSpaceNode>();
+
+            if (splitNames.Count == 0) return root;
+            foreach (var nameSpaceName in splitNames)
+            {
+                for (var i = 0; i < nameSpaceName.Length; i++)
+                {
+                    var addedNameSpaceNames = nameSpaceNodes.Select(node => node.NameSpaceName).ToList();
+                    if (addedNameSpaceNames.Contains(nameSpaceName[i])) continue;
+                    
+                    NameSpaceNode parentNode;
+                    if (i == 0)
+                    {
+                        parentNode = root;
                     }
+                    else
+                    {
+                        var parentName = nameSpaceName[i - 1];
+                        parentNode =
+                            nameSpaceNodes.First(node => node.NameSpaceName == parentName);
+                    }
+
+                    var newNode = new NameSpaceNode(id, nameSpaceName[i], nameSpaceDictionary[nameSpaceName]);
+                    parentNode.AddChild(newNode);
+                    nameSpaceNodes.Add(newNode);
+                    id++;
                 }
             }
 
@@ -91,24 +95,10 @@ namespace Plugins.MermaidMaker.Runtime.Core
             var fileText = "";
             var arrowTexts = new List<string>();
 
-            var types = assembly
-                .GetTypes()
-                .Where(type => _nameSpaces.Contains(type.Namespace))
-                .Where(type =>
-                    !type.GetInterfaces().Select(item => item.Namespace)
-                        .Select(name => Join(".", name!.Split(".").Take(2))).ToList().Contains("System.Runtime"))
-                .Where(type => !IsSpecial(type.Name));
-            var enumerable = types as Type[] ?? types.ToArray();
-            var memberInfos = enumerable.ToList();
-            _typeNames = enumerable.Select(type => RemoveGenericPartFromTypeName(type.Name)).ToList();
+            var memberInfos = GetValidTypes(assembly);
+            _typeNames = memberInfos.Select(type => RemoveGenericPartFromTypeName(type.Name)).ToList();
             foreach (var type in memberInfos)
             {
-                var interfaces = type.GetInterfaces().Select(item => item.Namespace)
-                    .Select(name => Join(".", name!.Split(".").Take(2))).ToList();
-                if (interfaces.Contains("System.Runtime")) continue;
-
-                if (IsSpecial(type.Name)) continue;
-
                 if (type.IsEnum)
                 {
                     fileText += $"{NewLine}    class {type.Name}{{{NewLine}    <<enum>>{NewLine}   }}{NewLine}";
@@ -274,7 +264,8 @@ namespace Plugins.MermaidMaker.Runtime.Core
                 {
                     var elementType = type.GetElementType()!;
                     if (!_typeNames.Contains(RemoveGenericPartFromTypeName(elementType.Name))) return "";
-                    text = $"{RemoveGenericPartFromTypeName(elementType.Name)} --o {RemoveGenericPartFromTypeName(classType.Name)}{NewLine}";
+                    text =
+                        $"{RemoveGenericPartFromTypeName(elementType.Name)} --o {RemoveGenericPartFromTypeName(classType.Name)}{NewLine}";
                 }
 
                 var arguments = type.GetGenericArguments().ToList();
@@ -291,7 +282,8 @@ namespace Plugins.MermaidMaker.Runtime.Core
             if (result == "") return "";
 
             if (!isFirst) return "";
-            return $"{RemoveGenericPartFromTypeName(type.GetElementType()!.Name)} --o {RemoveGenericPartFromTypeName(classType.Name)}";
+            return
+                $"{RemoveGenericPartFromTypeName(type.GetElementType()!.Name)} --o {RemoveGenericPartFromTypeName(classType.Name)}";
         }
 
         private static string GetTypeText(Type fieldType)

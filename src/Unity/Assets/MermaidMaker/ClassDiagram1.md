@@ -1,39 +1,17 @@
 ```mermaid
     classDiagram
 
-    class JamaicaSolver{
-       -static (int,string)[] ab
-       -static Stack<(int,string)> ba
-       -static readonly Stack<(int,string,int)[]> DiceHist
-       -static readonly Dictionary<int,string> OperatorDic
-       -static (int,string,int)[] _dices
-       -static List<string> _solutions
-       -static int _answer
+    class DiceModel{
+       -static Dice _answerDice
+       -static List<Dictionary<Dice,DiceModel>> _dices
+       +void SetDice(List<Dice> dices,Dice answerDice)
    }
 
-    class Hoge{
-       -static readonly Stack<(int,string,int)> DiceHist
-       -int _a
-       +int A(int a,string b)
+    class Dice{
+       +bool IsAnswerBox
+       +bool IsActive
+       +void ShuffleAsync(float shuffleLength,CancellationToken gameCt)
    }
-
-    class Values{
-    <<enum>>
-   }
-
-    class IInterface{
-    <<interface>>
-       +int A(int a,string b)
-   }
-
-    class Fuga{
-   }
-
-    class B{
-   }
-JamaicaSolver --|> Object
-Hoge --|> Fuga
-Hoge ..|> IInterface
-Fuga --|> Object
-B --|> Object
+Dice --o DiceModel
+DiceModel --o DiceModel
 ```
